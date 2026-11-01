@@ -16,4 +16,12 @@ public class EnvironmentService {
         environments.put(environment.getId(), environment);
         return environment;
     }
+
+    public EnvironmentRequest findById(UUID id) {
+        EnvironmentRequest environment = environments.get(id);
+        if (environment == null) {
+            throw new EnvironmentNotFoundException(id);
+        }
+        return environment;
+    }
 }
