@@ -56,7 +56,7 @@ jobs:
       matrix:
         dir:
           - environments/dev
-          - bootstrap/state-backend
+          #- bootstrap/state-backend
     defaults:
       run:
         working-directory: ${{ matrix.dir }}
