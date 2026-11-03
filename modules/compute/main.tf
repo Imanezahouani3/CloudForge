@@ -52,8 +52,8 @@ resource "aws_instance" "app" {
   vpc_security_group_ids = [var.security_group_id]
 
   associate_public_ip_address = true
-  iam_instance_profile = aws_iam_instance_profile.ec2_ssm.name
-    depends_on = [
+  iam_instance_profile        = aws_iam_instance_profile.ec2_ssm.name
+  depends_on = [
     aws_iam_role_policy_attachment.ssm_core
   ]
   tags = {
