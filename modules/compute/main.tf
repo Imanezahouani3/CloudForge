@@ -45,17 +45,36 @@ resource "aws_iam_instance_profile" "ec2_ssm" {
 }
 
 resource "aws_instance" "app" {
+  #checkov:skip=CKV_AWS_88:Public IP required - no NAT Gateway (cost). Ingress restricted to approved IP by SG.
+  #checkov:skip=CKV_AWS_126:Detailed monitoring adds CloudWatch cost. Basic 5-min monitoring is enough for dev.
+
   ami           = data.aws_ami.amazon_linux.id
   instance_type = var.instance_type
+  ebs_optimized = true
 
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [var.security_group_id]
 
   associate_public_ip_address = true
-  iam_instance_profile = aws_iam_instance_profile.ec2_ssm.name
-    depends_on = [
+  iam_instance_profile        = aws_iam_instance_profile.ec2_ssm.name
+
+  # IMDSv2 obligatoire : protège les credentials du rôle IAM contre les attaques SSRF.
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+  }
+
+  # Chiffrement du disque racine avec la clé gérée par AWS (gratuit).
+  root_block_device {
+    encrypted   = true
+    volume_type = "gp3"
+  }
+
+  depends_on = [
     aws_iam_role_policy_attachment.ssm_core
   ]
+
   tags = {
     Name        = "${var.project_name}-${var.environment}-app"
     Project     = var.project_name

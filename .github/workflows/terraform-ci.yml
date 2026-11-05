@@ -1,0 +1,91 @@
+
+
+name: Terraform CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "environments/**"
+      - "modules/**"
+      - "bootstrap/**"
+      - ".github/workflows/terraform-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "environments/**"
+      - "modules/**"
+      - "bootstrap/**"
+      - ".github/workflows/terraform-ci.yml"
+  workflow_dispatch: {}
+
+
+permissions:
+  contents: read
+
+
+concurrency:
+  group: terraform-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TF_VERSION: "1.17.0"
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  fmt:
+    name: Format (terraform fmt)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+     
+      - name: terraform fmt -check
+        run: terraform fmt -check -recursive -diff
+
+  validate:
+    name: Validate (${{ matrix.dir }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - environments/dev
+          #- bootstrap/state-backend
+    defaults:
+      run:
+        working-directory: ${{ matrix.dir }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      
+      - name: terraform init
+        run: terraform init -backend=false -input=false
+
+      - name: terraform validate
+        run: terraform validate -no-color
+
+  security:
+    name: Security scan (Checkov)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          framework: terraform
+         
+          soft_fail: false
+          output_format: cli

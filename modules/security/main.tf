@@ -1,4 +1,5 @@
 resource "aws_security_group" "api" {
+  #checkov:skip=CKV2_AWS_5:False positive - SG is attached to the EC2 instance in the compute module (cross-module reference).
   name        = "${var.project_name}-${var.environment}-api-sg"
   description = "Allow API access only from an approved IP"
   vpc_id      = var.vpc_id
@@ -12,10 +13,10 @@ resource "aws_security_group" "api" {
   }
 
   egress {
-    description = "Allow outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    description = "Allow outbound HTTPS only (SSM, AWS APIs, package updates)"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
