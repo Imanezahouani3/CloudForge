@@ -12,10 +12,10 @@ resource "aws_security_group" "api" {
   }
 
   egress {
-    description = "Allow outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    description = "Allow outbound HTTPS only (SSM, AWS APIs, package updates)"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
