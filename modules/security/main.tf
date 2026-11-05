@@ -1,4 +1,5 @@
 resource "aws_security_group" "api" {
+  #checkov:skip=CKV2_AWS_5:False positive - SG is attached to the EC2 instance in the compute module (cross-module reference).
   name        = "${var.project_name}-${var.environment}-api-sg"
   description = "Allow API access only from an approved IP"
   vpc_id      = var.vpc_id
