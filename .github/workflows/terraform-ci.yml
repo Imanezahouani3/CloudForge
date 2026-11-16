@@ -1,9 +1,8 @@
-
-
-name: Terraform CI
+name: CI
 
 on:
-  
+  # Pas de filtre "paths" : les checks sont obligatoires sur main (ruleset),
+  # ils doivent donc s'exécuter sur TOUTES les PR.
   pull_request:
     branches: [main]
   push:
@@ -14,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: terraform-ci-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -75,3 +74,29 @@ jobs:
           framework: terraform
           soft_fail: false
           output_format: cli
+
+  backend-tests:
+    name: Backend tests (Maven)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      # Java 21, comme dans pom.xml. Le cache garde les dépendances Maven
+      # entre deux exécutions pour aller plus vite.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      # mvnw a été créé sous Windows : il peut lui manquer le droit
+      # d'exécution sous Linux.
+      - name: Make Maven Wrapper executable
+        run: chmod +x mvnw
+
+      # verify = compilation + tous les tests
+      - name: Build and test
+        run: ./mvnw -B verify
