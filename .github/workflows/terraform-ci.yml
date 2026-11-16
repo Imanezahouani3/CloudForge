@@ -100,3 +100,23 @@ jobs:
       # verify = compilation + tous les tests
       - name: Build and test
         run: ./mvnw -B verify
+        
+  tflint:
+    name: Lint (TFLint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: terraform-linters/setup-tflint@v4
+
+      # Télécharge les plugins déclarés dans .tflint.hcl
+      - name: tflint --init
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      # Mode observation pour le premier passage : on lit les résultats
+      # sans bloquer la PR. On retirera continue-on-error après le tri.
+      - name: tflint
+        run: tflint --recursive --format compact
+        continue-on-error: true
